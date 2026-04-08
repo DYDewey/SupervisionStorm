@@ -4,7 +4,7 @@ from stormshield.sns.sslclient import SSLClient
 FIREWALL_IP = "IP_STORMSHIELD"
 USER = "USERSTORMSHIELD"
 PASSWORD = "MOTDEPASSEDUSTORMSHIELD"
-PORT_ADMIN = 4433
+PORT_ADMIN = 443
 
 def fetch_sns_stats():
     client = SSLClient(host=FIREWALL_IP, user=USER, password=PASSWORD, port=PORT_ADMIN, sslverifypeer=False)
