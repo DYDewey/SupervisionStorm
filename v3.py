@@ -5,8 +5,10 @@ import requests
 import re
 import sys
 
+
 PORT_ADMIN = 443
 VERIFY_SSL = False
+
 
 
 def connexion_firewall(host, user, password, port):
@@ -20,14 +22,15 @@ def connexion_firewall(host, user, password, port):
     )
 
 
+
 def envoyer_commande(client, commande):
     try:
         reponse = client.send_command(commande)
-        if reponse and hasattr(reponse, "output"):
-            return reponse.output
+        return reponse
     except Exception:
         pass
-    return ""
+    return None
+
 
 
 def extraire_avec_regex(texte, motif, valeur_par_defaut):
@@ -37,13 +40,29 @@ def extraire_avec_regex(texte, motif, valeur_par_defaut):
     return valeur_par_defaut
 
 
-def recuperer_version(client):
-    sortie = envoyer_commande(client, "SYSTEM PROPERTY")
-    return extraire_avec_regex(sortie, r'Version="?([^"\n]+)"?', "Inconnue")
+
+def recuperer_version_et_modele(client):
+    reponse = envoyer_commande(client, "SYSTEM PROPERTY")
+
+    version = "Inconnue"
+    modele = "Inconnu"
+
+    if reponse:
+        if hasattr(reponse, "data") and "Result" in reponse.data:
+            version = reponse.data["Result"].get("Version", "Inconnue")
+            modele = reponse.data["Result"].get("Model", "Inconnu")
+        elif hasattr(reponse, "output"):
+            sortie = reponse.output
+            version = extraire_avec_regex(sortie, r'Version="?([^"\n]+)"?', "Inconnue")
+            modele = extraire_avec_regex(sortie, r'Model="?([^"\n]+)"?', "Inconnu")
+
+    return version, modele
+
 
 
 def recuperer_systeme(client):
-    sortie = envoyer_commande(client, "MONITOR SYSTEM")
+    reponse = envoyer_commande(client, "MONITOR SYSTEM")
+    sortie = reponse.output if reponse and hasattr(reponse, "output") else ""
 
     return {
         "uptime": extraire_avec_regex(sortie, r'uptime=([^,\s]+)', "Inconnu"),
@@ -53,10 +72,15 @@ def recuperer_systeme(client):
     }
 
 
+
 def recuperer_ha(client):
-    sortie_config = envoyer_commande(client, "CONFIG HA SHOW")
-    sortie_info = envoyer_commande(client, "HA INFO")
-    sortie_mode = envoyer_commande(client, "hamode")
+    reponse_config = envoyer_commande(client, "CONFIG HA SHOW")
+    reponse_info = envoyer_commande(client, "HA INFO")
+    reponse_mode = envoyer_commande(client, "hamode")
+
+    sortie_config = reponse_config.output if reponse_config and hasattr(reponse_config, "output") else ""
+    sortie_info = reponse_info.output if reponse_info and hasattr(reponse_info, "output") else ""
+    sortie_mode = reponse_mode.output if reponse_mode and hasattr(reponse_mode, "output") else ""
 
     if "State=0" in sortie_config:
         return "HA non activé"
@@ -70,8 +94,10 @@ def recuperer_ha(client):
     return "Information HA non disponible"
 
 
+
 def recuperer_interfaces(client):
-    sortie = envoyer_commande(client, "MONITOR INTERFACE")
+    reponse = envoyer_commande(client, "MONITOR INTERFACE")
+    sortie = reponse.output if reponse and hasattr(reponse, "output") else ""
     interfaces = []
 
     for ligne in sortie.splitlines():
@@ -89,8 +115,11 @@ def recuperer_interfaces(client):
     return interfaces
 
 
+
 def recuperer_licence(client):
-    sortie = envoyer_commande(client, "SYSTEM LICENCE DUMP")
+    reponse = envoyer_commande(client, "SYSTEM LICENCE DUMP")
+    sortie = reponse.output if reponse and hasattr(reponse, "output") else ""
+
     licence = {
         "statut": "Non trouvée",
         "version": "Inconnue",
@@ -114,12 +143,19 @@ def recuperer_licence(client):
     return licence
 
 
-def afficher_resultats(host, version, systeme, ha, interfaces, licence):
+
+def generer_resume_final(modele, version, ha, licence, interfaces):
+    return f"{modele} | version {version} | {ha} | licence {licence['statut']} | {len(interfaces)} interfaces"
+
+
+
+def afficher_resultats(host, modele, version, systeme, ha, interfaces, licence):
     print("\n" + "=" * 60)
     print(f"AUDIT DU FIREWALL : {host}")
     print("=" * 60)
 
-    print(f"\nVersion firmware : {version}")
+    print(f"\nModèle firewall  : {modele}")
+    print(f"Version firmware : {version}")
     print(f"Etat HA          : {ha}")
 
     print("\n--- RESSOURCES SYSTEME ---")
@@ -140,7 +176,11 @@ def afficher_resultats(host, version, systeme, ha, interfaces, licence):
     else:
         print("Aucune interface trouvée")
 
+    print("\n--- RESUME FINAL ---")
+    print(generer_resume_final(modele, version, ha, licence, interfaces))
+
     print("=" * 60)
+
 
 
 def main():
@@ -160,19 +200,19 @@ def main():
         client = connexion_firewall(host, user, password, port)
         print("[+] Connexion réussie")
 
-        version = recuperer_version(client)
+        version, modele = recuperer_version_et_modele(client)
         systeme = recuperer_systeme(client)
         ha = recuperer_ha(client)
         interfaces = recuperer_interfaces(client)
         licence = recuperer_licence(client)
 
-        afficher_resultats(host, version, systeme, ha, interfaces, licence)
+        afficher_resultats(host, modele, version, systeme, ha, interfaces, licence)
 
     except ValueError:
         print("\n[ERREUR] Le port doit être un nombre.")
         sys.exit(1)
     except requests.exceptions.ConnectTimeout:
-        print("\n[ERREUR] Connexion impossible.")
+        print("\n[ERREUR] Connexion impossible .")
         sys.exit(1)
     except requests.exceptions.ConnectionError:
         print("\n[ERREUR] Firewall injoignable.")
@@ -192,6 +232,7 @@ def main():
                 client.disconnect()
             except Exception:
                 pass
+
 
 
 if __name__ == "__main__":
