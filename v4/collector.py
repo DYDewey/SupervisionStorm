@@ -8,7 +8,7 @@ VERIFY_SSL = False
 def traduction_erreur(exception):
     message = str(exception)
     if "NameResolutionError" in message or "getaddrinfo failed" in message:
-        return "Nom d’hôte ou adresse IP invalide"
+        return "Nom d'hôte ou adresse IP invalide"
     if "Max retries exceeded" in message or "Connection refused" in message:
         return "Pare-feu inaccessible"
     if "401" in message or "403" in message:
