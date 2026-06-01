@@ -4,6 +4,7 @@ import re
 
 PORT_ADMIN = 443
 VERIFY_SSL = False
+VERSION_REFERENCE = "4.8.16"
 
 def traduction_erreur(exception):
     message = str(exception)
@@ -110,34 +111,43 @@ def recuperer_licence(client):
     licence["expiration"] = extraire_avec_regex(sortie, r'NotAfter[=:]\"?([^\n\"]+)\"?', "Inconnue")
     return licence
 
-def generer_resume_final(modele, version, ha, licence, interfaces):
-    return f"{modele} | version {version} | {ha} | licence {licence['statut']} | {len(interfaces)} interfaces"
+def generer_resume_final(modele, version, ha, licence, interfaces, mise_a_jour):
+    return f"{modele} | version {version} | {mise_a_jour} | {ha} | licence {licence['statut']} | {len(interfaces)} interfaces"
 
-def construire_donnees_json(host, modele, version, systeme, ha, interfaces, licence):
+def construire_resultat(host, modele, version, systeme, ha, interfaces, licence, mise_a_jour):
     return {
         "date_audit": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "host": host,
         "modele": modele,
         "version_firmware": version,
+        "mise_a_jour": mise_a_jour,
         "ha": ha,
         "systeme": systeme,
         "licence": licence,
         "interfaces": interfaces,
-        "resume_final": generer_resume_final(modele, version, ha, licence, interfaces)
+        "resume_final": generer_resume_final(modele, version, ha, licence, interfaces, mise_a_jour)
     }
 
+def verifier_mise_a_jour(version_installee):
+    if version_installee.startswith(VERSION_REFERENCE):
+        return "À jour"
+    elif version_installee.startswith("4.8") or version_installee.startswith("4.7"):
+        return "Mise à jour disponible"
+    else:
+        return "Version obsolète"
+    
 def collecter_firewall(host, user, password, port=443):
     client = None
     try:
         client = connexion_firewall(host, user, password, port)
         version, modele = recuperer_version_et_modele(client)
+        mise_a_jour = verifier_mise_a_jour(version)
         systeme = recuperer_systeme(client)
         ha = recuperer_ha(client)
         interfaces = recuperer_interfaces(client)
         licence = recuperer_licence(client)
-
-        donnees = construire_donnees_json(
-            host, modele, version, systeme, ha, interfaces, licence
+        donnees = construire_resultat(
+            host, modele, version, systeme, ha, interfaces, licence, mise_a_jour
         )
         donnees["statut"] = "OK"
         return donnees

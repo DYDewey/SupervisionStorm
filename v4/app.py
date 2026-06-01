@@ -38,8 +38,6 @@ def index():
             )
     return render_template("index.html")
 
-import requests
-
 def traduire_erreur(exception):
     message = str(exception)
     if "NameResolutionError" in message or "getaddrinfo failed" in message:

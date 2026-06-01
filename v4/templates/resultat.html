@@ -22,9 +22,15 @@
                 <div class="mb-3">
                     <span class="fw-bold">Statut :</span>
                     {% if resultat.statut == "OK" %}
-                        <span class="badge bg-success">OK</span>
+                        {% if resultat.mise_a_jour == "À jour" %}
+                            <span class="badge bg-success">À jour</span>
+                        {% elif resultat.mise_a_jour == "Mise à jour disponible" %}
+                            <span class="badge bg-warning text-dark">Mise à jour disponible</span>
+                        {% else %}
+                            <span class="badge bg-danger">Version obsolète</span>
+                        {% endif %}
                     {% else %}
-                        <span class="badge bg-danger">KO</span>
+                        <span class="badge bg-danger">Erreur</span>
                     {% endif %}
                 </div>
                 {% if resultat.statut == "OK" %}
