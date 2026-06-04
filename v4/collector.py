@@ -4,7 +4,7 @@ import re
 
 PORT_ADMIN = 443
 VERIFY_SSL = False
-VERSION_REFERENCE = "4.8.16"
+VERSION_REFERENCE = "4.8.3"
 
 def traduction_erreur(exception):
     message = str(exception)
@@ -111,8 +111,6 @@ def recuperer_licence(client):
     licence["expiration"] = extraire_avec_regex(sortie, r'NotAfter[=:]\"?([^\n\"]+)\"?', "Inconnue")
     return licence
 
-def generer_resume_final(modele, version, ha, licence, interfaces, mise_a_jour):
-    return f"{modele} | version {version} | {mise_a_jour} | {ha} | licence {licence['statut']} | {len(interfaces)} interfaces"
 
 def construire_resultat(host, modele, version, systeme, ha, interfaces, licence, mise_a_jour):
     return {
@@ -125,7 +123,6 @@ def construire_resultat(host, modele, version, systeme, ha, interfaces, licence,
         "systeme": systeme,
         "licence": licence,
         "interfaces": interfaces,
-        "resume_final": generer_resume_final(modele, version, ha, licence, interfaces, mise_a_jour)
     }
 
 def verifier_mise_a_jour(version_installee):
