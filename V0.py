@@ -8,7 +8,6 @@ PORT_ADMIN = "PORT"
 
 def fetch_sns_stats():
     client = SSLClient(host=FIREWALL_IP, user=USER, password=PASSWORD, port=443, sslverifypeer=False)
-
     try:
         client.connect()
         system_info_resp = client.send_command("MONITOR SYSTEM")

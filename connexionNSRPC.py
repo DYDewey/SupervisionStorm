@@ -8,11 +8,10 @@ PORT_ADMIN = 443
 
 def fetch_sns_stats():
     client = SSLClient(host=FIREWALL_IP, user=USER, password=PASSWORD, port=PORT_ADMIN, sslverifypeer=False)
-
     try:
         # Connexion au boîtier
         client.connect()
-
+        print(f"\n Connexion reussi")
     except Exception as e:
         print(f"\n[!] Erreur de connexion ou d'exécution : {e}")
     

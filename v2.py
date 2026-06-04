@@ -141,12 +141,10 @@ def fetch_sns_stats():
                     name = p.get('name', '???').split(',')[0]
                     addr = p.get('addr', 'No IP')
                     link = "LINK OK" if p.get('plugged') == "1" else "NO LINK"
-                    
                     wan_tag = "[WAN] " if name.lower() == "out" or "ethernet0" in line.lower() else "      "
                     print(f"  {wan_tag} {name.upper():<10} | {addr:<18} | {link}")
                 except:
                     pass
-
         print("\n" + "="*65)
 
     except Exception as e:

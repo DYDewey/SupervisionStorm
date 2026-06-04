@@ -1,10 +1,10 @@
 from stormshield.sns.sslclient import SSLClient
 
 # --- Configuration ---
-FIREWALL_IP = "FIREWALLIP"
-USER = "USER"
-PASSWORD = "PASSWORD"
-PORT_ADMIN = "PORT"
+FIREWALL_IP = "192.168.1.1"
+USER = "admin"
+PASSWORD = "G2j@x5f2XK7e!HM4y3"
+PORT_ADMIN = "443"
 
 
 def fetch_sns_stats():
@@ -14,16 +14,13 @@ def fetch_sns_stats():
     try:
         # Connexion au boîtier
         client.connect()
-
         # 1. Récupération des infos système (CPU, RAM, Temp, Uptime)
         # On utilise MONITOR au lieu de CONFIG MONITOR (qui est pour la config)
         system_info_resp = client.send_command("MONITOR SYSTEM")
         system_info = system_info_resp.output
-        
         # 2. Récupération de l'état des interfaces
         interfaces_resp = client.send_command("MONITOR INTERFACE")
         interfaces = interfaces_resp.output
-
         print("="*50)
         print(f" SUPERVISION STORMSHIELD : {FIREWALL_IP} ")
         print("="*50)

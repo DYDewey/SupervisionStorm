@@ -99,7 +99,6 @@ def recuperer_licence(client):
     sortie = reponse.output if reponse and hasattr(reponse, "output") else ""
     licence = {
         "statut": "Non trouvée",
-        "version": "Inconnue",
         "expiration": "Inconnue"
     }
     if not sortie:
